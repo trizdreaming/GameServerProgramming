@@ -1,36 +1,50 @@
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
+# Compiled Object files
+*.slo
+*.lo
+*.o
 
-# Folder config file
-Desktop.ini
+# Compiled Dynamic libraries
+*.so
+*.dylib
 
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
+# Compiled Static libraries
+*.lai
+*.la
+*.a
 
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
+*.ipch
+*.sdf
+*.opensdf
+*.suo
+*.user
 
-# =========================
-# Operating System Files
-# =========================
+# Temp Recording Text File
+recordNote.txt
 
-# OSX
-# =========================
+_ReSharper.*/
+*.cd
+*.tlog
+*.log
+*.sass-cache
 
-.DS_Store
-.AppleDouble
-.LSOverride
+*.pidb
+*.userprefs
+*.dbmdl
 
-# Icon must ends with two \r.
-Icon
+TestResult.xml
+*.VisualState.xml
+Version.cs
+Version.h
+Version.cpp
 
-# Thumbnails
-._*
+# generated files
+ipch/
+Debug/
+Release/
+bin/
+obj/
 
-# Files that might appear on external disk
-.Spotlight-V100
-.Trashes
+ScreenShot/
+
+*.TMP
+*.bak
