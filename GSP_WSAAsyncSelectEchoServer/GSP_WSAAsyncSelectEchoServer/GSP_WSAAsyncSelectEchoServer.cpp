@@ -222,8 +222,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 					break;
 
 				case FD_CLOSE:
-					EndSocket();
-
+					shutdown( (SOCKET)wParam, SD_BOTH );
+					closesocket( (SOCKET)wParam );
 					break;
 
 				default:
