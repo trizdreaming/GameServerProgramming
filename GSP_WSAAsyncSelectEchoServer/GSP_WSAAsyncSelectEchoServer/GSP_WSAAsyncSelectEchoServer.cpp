@@ -84,7 +84,6 @@ int APIENTRY _tWinMain( _In_ HINSTANCE hInstance,
 		DispatchMessage( &msg );
 	}
 
-	CloseServerSocket();
 	return (int)msg.wParam;
 }
 
@@ -213,9 +212,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 							printf_s( "Session Map Structure err No: %d", WSAGetLastError() );
 						}
 						pSession->sessionSocket = clientSocket;
-						//sessionDatastructure[(SOCKET)wParam] = pSession;
+						//sessionDatastructure[clientSocket] = pSession;
 						//sessionDatastructure.insert( std::pair<SOCKET, SESSION_INFO*>( (SOCKET)wParam, pSession ) );
-						sessionDatastructure.insert( std::make_pair( (SOCKET)wParam, pSession ));
+						sessionDatastructure.insert( std::make_pair( clientSocket, pSession ));
 					}
 
 					break;
@@ -259,6 +258,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 					memcpy_s( pSession->sendBuffer, BUFFER_SIZE + 1, pSession->recvBuffer, rc );
 					pSession->sendBytes = rc;
 
+					PostMessage( hWnd, WM_SOCKET, (SOCKET)wParam, FD_WRITE );
 					break;
 				}
 					
@@ -301,8 +301,10 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 				default:
 					break;
 			}
+			break;
 
 		case WM_DESTROY:
+			CloseServerSocket();
 			PostQuitMessage( 0 );
 			break;
 		default:
