@@ -1,4 +1,4 @@
-// GSP_WSAAsyncSelectEchoServer.cpp : Defines the entry point for the application.
+ï»¿// GSP_WSAAsyncSelectEchoServer.cpp : Defines the entry point for the application.
 //
 
 #include "stdafx.h"
@@ -34,11 +34,11 @@ ATOM				MyRegisterClass( HINSTANCE hInstance );
 BOOL				InitInstance( HINSTANCE, int );
 LRESULT CALLBACK	WndProc( HWND, UINT, WPARAM, LPARAM );
 
-//server °ü·Ã µ¥ÀÌÅÍ
+//server ê´€ë ¨ ë°ì´í„°
 SOCKET g_ServerSocket;
 //SOCKET g_ConnSocket;
 
-// server °ü·Ã Àü¹æ ¼±¾ğ
+// server ê´€ë ¨ ì „ë°© ì„ ì–¸
 BOOL ServerInit( HWND hWnd );
 void CloseClientSocket( SOCKET clientSocket );
 void CloseServerSocket();
@@ -48,17 +48,17 @@ int APIENTRY _tWinMain( _In_ HINSTANCE hInstance,
 						_In_ LPTSTR    lpCmdLine,
 						_In_ int       nCmdShow )
 {
-	//ÇÊ¿ä ¾ø¾î¼­ ¸·¾Æ µĞ °Å
+	//í•„ìš” ì—†ì–´ì„œ ë§‰ì•„ ë‘” ê±°
 	UNREFERENCED_PARAMETER( hPrevInstance );
 	UNREFERENCED_PARAMETER( lpCmdLine );
 
-	//ÄÜ¼Ö Ã¢ alloc
+	//ì½˜ì†” ì°½ alloc
 	AllocConsole();
 	FILE* pFile;
 	freopen_s( &pFile, "CONOUT$", "wb", stdout );
 
 // #ifdef _DEBUG
-// 	printf_s( "»Ğ" );
+// 	printf_s( "ë¿…" );
 // #endif
 
 	// TODO: Place code here.
@@ -139,11 +139,11 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 		return FALSE;
 	}
 
-	//À©µµ¿ì Ã¢Àº ÇÊ¿ä°¡ ¾ø´Ù
+	//ìœˆë„ìš° ì°½ì€ í•„ìš”ê°€ ì—†ë‹¤
 	//ShowWindow(hWnd, nCmdShow);
 	//UpdateWindow(hWnd);
 
-	//¼­¹ö Start
+	//ì„œë²„ Start
 	printf_s( "Server Init Start \n" );
 	if ( !ServerInit( hWnd ) )
 	{
@@ -167,9 +167,6 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	//ÀÌ³à¼®µé °è¼Ó ÇÒ´ç ÇØ¾ßµÇ´Â°¡?
-	//»ı°¢ Á»...
-	
 
 	switch ( message )
 	{
@@ -182,7 +179,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 			switch ( WSAGETSELECTEVENT(lParam) )
 			{
 				case FD_ACCEPT:
-				//º¯¼ö ¼±¾ğÀ» À§ÇØ ½ºÅÃ 1µª½º ´õ °¡´Â °Å
+				//ë³€ìˆ˜ ì„ ì–¸ì„ ìœ„í•´ ìŠ¤íƒ 1ëìŠ¤ ë” ê°€ëŠ” ê±°
 				{
 					SOCKADDR_IN clientAddr;
 					SOCKET clientSocket = NULL;
@@ -239,7 +236,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 						if ( WSAGetLastError() == WSAEWOULDBLOCK )
 						{
 #ifdef _DEBUG
-							printf_s( "³íºí·Ï µ¥ÀÌÅÍ ¹Ş´Â Áß!\n" );
+							printf_s( "ë…¼ë¸”ë¡ ë°ì´í„° ë°›ëŠ” ì¤‘!\n" );
 #endif
 							break;
 						}
@@ -250,7 +247,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 						}
 					}
 #ifdef _DEBUG
-					printf_s( "¿ì¿Õ µ¥ÀÌÅÍ ¿Ô¶¥! \n" );
+					printf_s( "ìš°ì™• ë°ì´í„° ì™”ë•…! \n" );
 #endif
 					pSession->recvBytes = rc;
 					pSession->recvBuffer[rc] = '\0';
@@ -326,7 +323,7 @@ BOOL ServerInit( HWND hWnd )
 		return FALSE;
 	}
 
-	//¼­¹ö ¼ÒÄÏ »ı¼º
+	//ì„œë²„ ì†Œì¼“ ìƒì„±
 	g_ServerSocket = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 	if (g_ServerSocket == INVALID_SOCKET)
 	{
@@ -335,14 +332,14 @@ BOOL ServerInit( HWND hWnd )
 		return FALSE;
 	}
 
-	//¼­¹ö ¼ÒÄÏ ¼³Á¤ ÇÏ±â
+	//ì„œë²„ ì†Œì¼“ ì„¤ì • í•˜ê¸°
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_addr.s_addr = htonl( INADDR_ANY );
 	//////////////////////////////////////////////////////////////////////////
-	//Âü°í_Æ¯Á¤ ÁÖ¼Ò ¹ŞÀ» ¶§
+	//ì°¸ê³ _íŠ¹ì • ì£¼ì†Œ ë°›ì„ ë•Œ
 	//serverAddr.sin_addr.s_addr = inet_addr( "xxx.xxx.xxx.xxx" );
 	//////////////////////////////////////////////////////////////////////////
-	serverAddr.sin_port = htons( 9001 ); //Á¦°øµÈ client port ¹øÈ£¸¦ µû¸§
+	serverAddr.sin_port = htons( 9001 ); //ì œê³µëœ client port ë²ˆí˜¸ë¥¼ ë”°ë¦„
 	
 	err = bind( g_ServerSocket, (PSOCKADDR)&serverAddr, sizeof( serverAddr ) );
 	if (err == SOCKET_ERROR)
