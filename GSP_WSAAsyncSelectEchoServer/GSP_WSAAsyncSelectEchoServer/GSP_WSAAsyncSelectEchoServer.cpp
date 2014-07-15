@@ -5,12 +5,24 @@
 #include "GSP_WSAAsyncSelectEchoServer.h"
 #include <stdio.h>
 #include <winsock2.h>
+#include <map>
 
 #pragma comment(lib, "ws2_32.lib")
 
 #define WM_SOCKET (WM_APP+1)
 #define MAX_LOADSTRING 100
 #define BUFFER_SIZE 1024*4
+
+typedef struct SESSION
+{
+	SOCKET sessionSocket = NULL;
+	char recvBuffer[BUFFER_SIZE + 1];
+	char sendBuffer[BUFFER_SIZE + 1];
+	int recvBytes;
+	int sendBytes;
+}SESSION_INFO;
+
+std::map<SOCKET, SESSION_INFO*> sessionDatastructure;
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
@@ -24,14 +36,12 @@ LRESULT CALLBACK	WndProc( HWND, UINT, WPARAM, LPARAM );
 
 //server 관련 데이터
 SOCKET g_ServerSocket;
-SOCKET g_ConnSocket;
+//SOCKET g_ConnSocket;
 
 // server 관련 전방 선언
 BOOL ServerInit( HWND hWnd );
-void EndSocket();
-// void OnAccept( HWND hWnd, SOCKET instSock );
-// void OnRead( SOCKET instSock );
-// void OnClose( HWND hWnd, SOCKET instSock );
+void CloseClientSocket( SOCKET clientSocket );
+void CloseServerSocket();
 
 int APIENTRY _tWinMain( _In_ HINSTANCE hInstance,
 						_In_opt_ HINSTANCE hPrevInstance,
@@ -74,7 +84,7 @@ int APIENTRY _tWinMain( _In_ HINSTANCE hInstance,
 		DispatchMessage( &msg );
 	}
 
-	//WSACleanup();
+	CloseServerSocket();
 	return (int)msg.wParam;
 }
 
@@ -156,18 +166,11 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 //
 //
 
-typedef struct ConnectSocket
-{
-	SOCKET connSocket;
-	char buffer[BUFFER_SIZE];
-}Connects;
-
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	SOCKADDR_IN connAddr;
-	int rc;
-	char buffer[BUFFER_SIZE] = { 0, };
-	//Connects a;
+	//이녀석들 계속 할당 해야되는가?
+	//생각 좀...
+	
 
 	switch ( message )
 	{
@@ -180,46 +183,115 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 			switch ( WSAGETSELECTEVENT(lParam) )
 			{
 				case FD_ACCEPT:
-					
-					rc = sizeof( connAddr );
-					g_ConnSocket = accept( (SOCKET)wParam, (PSOCKADDR)&connAddr, &rc );
-					if (g_ConnSocket == INVALID_SOCKET)
+				//변수 선언을 위해 스택 1뎁스 더 가는 거
+				{
+					SOCKADDR_IN clientAddr;
+					SOCKET clientSocket = NULL;
+				
+					int rc = sizeof( clientAddr );
+					clientSocket = accept( (SOCKET)wParam, (PSOCKADDR)&clientAddr, &rc );
+					if ( clientSocket == INVALID_SOCKET )
 					{
-						EndSocket();
+						CloseClientSocket( clientSocket );
 						printf_s( "Socket Accept err No: %d", WSAGetLastError() );
 						break;
 					}
-					printf_s( "Socket Accept OK [%d, %s : %d] \n", g_ConnSocket, inet_ntoa(connAddr.sin_addr), ntohs(connAddr.sin_port) );
+					printf_s( "Socket Accept OK [%d, %s : %d] \n", clientSocket, inet_ntoa( clientAddr.sin_addr ), ntohs( clientAddr.sin_port ) );
 
-					rc = WSAAsyncSelect( g_ConnSocket, hWnd, WM_SOCKET, FD_READ | FD_CLOSE );
+					rc = WSAAsyncSelect( clientSocket, hWnd, WM_SOCKET, FD_READ | FD_WRITE | FD_CLOSE );
 					if (rc == SOCKET_ERROR)
 					{
-						EndSocket();
+						CloseClientSocket( clientSocket );
 						printf_s( "WSAAsyncSelect err No: %d", WSAGetLastError() );
-					}
-
-					break;
-
-				case  FD_READ:
-					rc = recv( (SOCKET)wParam, buffer, BUFFER_SIZE, 0 );
-					
-#ifdef _DEBUG
-					printf_s( "우왕 데이터 왔땅! \n" );
-#endif
-					
-					if ( rc != SOCKET_ERROR)
-					{
-						send( (SOCKET)wParam, buffer, rc, 0 );
-#ifdef _DEBUG
-						printf_s( "반사! \n" );
-#endif
 					}
 					else
 					{
-						printf_s( "Socket Recv err No: %d", WSAGetLastError() );
+						SESSION_INFO* pSession = new SESSION_INFO;
+						if (pSession == nullptr)
+						{
+							CloseClientSocket( clientSocket );
+							printf_s( "Session Map Structure err No: %d", WSAGetLastError() );
+						}
+						pSession->sessionSocket = clientSocket;
+						//sessionDatastructure[(SOCKET)wParam] = pSession;
+						//sessionDatastructure.insert( std::pair<SOCKET, SESSION_INFO*>( (SOCKET)wParam, pSession ) );
+						sessionDatastructure.insert( std::make_pair( (SOCKET)wParam, pSession ));
 					}
 
 					break;
+				}
+
+				case  FD_READ:
+				{
+					SESSION_INFO* pSession = nullptr;
+					auto searchResult = sessionDatastructure.find( (SOCKET)wParam );
+					if (searchResult == sessionDatastructure.end())
+					{
+						break;
+					}
+					else
+					{
+						pSession = searchResult->second;
+					}
+
+					int rc = recv( (SOCKET)wParam, pSession->recvBuffer, BUFFER_SIZE, 0 );
+					if (rc == SOCKET_ERROR)
+					{
+						if ( WSAGetLastError() == WSAEWOULDBLOCK )
+						{
+#ifdef _DEBUG
+							printf_s( "논블록 데이터 받는 중!\n" );
+#endif
+							break;
+						}
+						else
+						{
+							CloseClientSocket( (SOCKET)wParam );
+							break;
+						}
+					}
+#ifdef _DEBUG
+					printf_s( "우왕 데이터 왔땅! \n" );
+#endif
+					pSession->recvBytes = rc;
+					pSession->recvBuffer[rc] = '\0';
+
+					memcpy_s( pSession->sendBuffer, BUFFER_SIZE + 1, pSession->recvBuffer, rc );
+					pSession->sendBytes = rc;
+
+					break;
+				}
+					
+				case FD_WRITE:
+				{
+					SESSION_INFO* pSession = nullptr;
+					auto searchResult = sessionDatastructure.find( (SOCKET)wParam );
+					if ( searchResult == sessionDatastructure.end() )
+					{
+						break;
+					}
+					else
+					{
+						pSession = searchResult->second;
+					}
+
+					int rc = send( (SOCKET)wParam, pSession->sendBuffer, pSession->sendBytes, 0 );
+					if ( rc == SOCKET_ERROR )
+					{
+						if ( WSAGetLastError() == WSAEWOULDBLOCK )
+							break;
+						else
+						{
+							CloseClientSocket( (SOCKET)wParam );
+							break;
+						}
+					}
+
+					pSession->sendBytes = 0;
+
+					break;
+				}
+					
 
 				case FD_CLOSE:
 					shutdown( (SOCKET)wParam, SD_BOTH );
@@ -247,6 +319,7 @@ BOOL ServerInit( HWND hWnd )
 	int err = WSAStartup( MAKEWORD( 2, 2 ), &wsaData );
 	if (err != 0)
 	{
+		CloseServerSocket();
 		printf_s( "WSAStartup failed with error: %d \n", err );
 		return FALSE;
 	}
@@ -255,6 +328,7 @@ BOOL ServerInit( HWND hWnd )
 	g_ServerSocket = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 	if (g_ServerSocket == INVALID_SOCKET)
 	{
+		CloseServerSocket();
 		printf_s( "Server Socket err No: %d", WSAGetLastError() );
 		return FALSE;
 	}
@@ -271,7 +345,7 @@ BOOL ServerInit( HWND hWnd )
 	err = bind( g_ServerSocket, (PSOCKADDR)&serverAddr, sizeof( serverAddr ) );
 	if (err == SOCKET_ERROR)
 	{
-		EndSocket();
+		CloseServerSocket();
 		printf_s( "Server Socket Bind err No: %d", WSAGetLastError() );
 		return FALSE;
 	}
@@ -280,7 +354,7 @@ BOOL ServerInit( HWND hWnd )
 	err = WSAAsyncSelect( g_ServerSocket, hWnd, WM_SOCKET, FD_ACCEPT | FD_CLOSE );
 	if (err == SOCKET_ERROR)
 	{
-		EndSocket();
+		CloseServerSocket();
 		printf_s( "WSAAsyncSelect err No: %d", WSAGetLastError() );
 		return FALSE;
 	}
@@ -289,7 +363,7 @@ BOOL ServerInit( HWND hWnd )
 	err = listen( g_ServerSocket, SOMAXCONN );
 	if (err == SOCKET_ERROR)
 	{
-		EndSocket();
+		CloseServerSocket();
 		printf_s( "Server Socket Listen err No: %d", WSAGetLastError() );
 		return FALSE;
 	}
@@ -298,18 +372,42 @@ BOOL ServerInit( HWND hWnd )
 	return TRUE;
 }
 
-void EndSocket()
+void CloseClientSocket( SOCKET clientSocket )
 {
-	if ( g_ConnSocket )
+	if ( sessionDatastructure.end() != sessionDatastructure.find( clientSocket ) )
 	{
-		shutdown( g_ConnSocket, SD_BOTH );
-		closesocket( g_ConnSocket );
-		g_ConnSocket = NULL;
+		shutdown( sessionDatastructure[clientSocket]->sessionSocket, SD_BOTH );
+		closesocket( sessionDatastructure[clientSocket]->sessionSocket );
+		delete sessionDatastructure[clientSocket];
 	}
+	else
+	{
+		shutdown( clientSocket, SD_BOTH );
+		closesocket( clientSocket );
+	}
+}
 
+void CloseServerSocket()
+{
 	if ( g_ServerSocket )
 	{
 		closesocket( g_ServerSocket );
 		g_ServerSocket = NULL;
 	}
+	WSACleanup();
 }
+
+// 	for (auto& iter:sessionDatastructure)
+// 	{
+// 		shutdown( iter.second->sessionSocket, SD_BOTH );
+// 		closesocket( iter.second->sessionSocket );
+// 		delete iter.second;
+// 	}
+
+//	sessionDatastructure.clear();
+
+// 	if ( g_ServerSocket )
+// 	{
+// 		closesocket( g_ServerSocket );
+// 		g_ServerSocket = NULL;
+// 	}
