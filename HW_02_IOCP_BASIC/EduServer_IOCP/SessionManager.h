@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <map>
 #include <WinSock2.h>
 #include "FastSpinlock.h"
@@ -22,7 +22,7 @@ private:
 	typedef std::map<SOCKET, ClientSession*> ClientList;
 	ClientList	mClientList;
 
-	//TODO: mLock; ¼±¾ð
+	//TODO: mLock; ì„ ì–¸
 	FastSpinlock mLock;
 
 	volatile long mCurrentConnectionCount;

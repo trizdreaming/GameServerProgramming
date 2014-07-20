@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "IocpManager.h"
 #include "EduServer_IOCP.h"
 #include "ClientSession.h"
@@ -20,8 +20,8 @@ IocpManager::~IocpManager()
 
 bool IocpManager::Initialize()
 {
-	//TODO: mIoThreadCount = ...;GetSystemInfo»ç¿ëÇØ¼­ set num of I/O threads
-	//ÀÏ´Ü ½Ã½ºÅÛ ÄÚ¾î °³¼öÀÇ 2¹è·Î ÇÕ½Ã´Ù
+	//TODO: mIoThreadCount = ...;GetSystemInfoì‚¬ìš©í•´ì„œ set num of I/O threads
+	//ì¼ë‹¨ ì‹œìŠ¤í…œ ì½”ì–´ ê°œìˆ˜ì˜ 2ë°°ë¡œ í•©ì‹œë‹¤
 	SYSTEM_INFO si;
 	GetSystemInfo( &si );
 	mIoThreadCount = (int)si.dwNumberOfProcessors * 2;
@@ -48,7 +48,7 @@ bool IocpManager::Initialize()
 		return false;
 	}
 	
-	//³×ÀÌ±Û ¾Ë°í¸®Áò
+	//ë„¤ì´ê¸€ ì•Œê³ ë¦¬ì¦˜
 	int opt = TRUE;
 	setsockopt(mListenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
 
@@ -101,10 +101,10 @@ bool IocpManager::StartAcceptLoop()
 		int addrlen = sizeof(clientaddr);
 		getpeername(acceptedSock, (SOCKADDR*)&clientaddr, &addrlen);
 
-		/// ¼ÒÄÏ Á¤º¸ ±¸Á¶Ã¼ ÇÒ´ç°ú ÃÊ±âÈ­
+		/// ì†Œì¼“ ì •ë³´ êµ¬ì¡°ì²´ í• ë‹¹ê³¼ ì´ˆê¸°í™”
 		ClientSession* client = GSessionManager->CreateClientSession(acceptedSock);
 
-		/// Å¬¶ó Á¢¼Ó Ã³¸®
+		/// í´ë¼ ì ‘ì† ì²˜ë¦¬
 		if (false == client->OnConnect(&clientaddr))
 		{
 			client->Disconnect(DR_ONCONNECT_ERROR);
@@ -129,7 +129,7 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 {
 	LThreadType = THREAD_IO_WORKER;
 
-	//TreadID¸¦ ÁöÁ¤ÇÏ´Â º°µµ º¯¼ö°¡ ¾ø±â ¶§¹®¿¡ idx¸¦ ¹Ş¾Æ ³Ñ°Ü¿È
+	//TreadIDë¥¼ ì§€ì •í•˜ëŠ” ë³„ë„ ë³€ìˆ˜ê°€ ì—†ê¸° ë•Œë¬¸ì— idxë¥¼ ë°›ì•„ ë„˜ê²¨ì˜´
 	LIoThreadId = reinterpret_cast<int>(lpParam);
 	HANDLE hComletionPort = GIocpManager->GetComletionPort();
 
@@ -154,9 +154,9 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 		}
 
 		//TODO::
-		//Ä¿³Ø¼ÇÀº »ì¾Æ ÀÖ´Â »óÅÂ, ¼¼¼Çµµ »ì¾ÆÀÖ´Â »óÅÂ
-		//±×·±µ¥ Overlapped ±¸Á¶Ã¼°¡ ±úÁ³À¸¸é ÀÌ°æ¿ì ºñµ¿±â·Î ¹Ş°í º¸³½ °É È®ÀÎÇÒ ¼ö ¾øÀİ¾Æ?
-		//¼¼¼ÇÀº »ì¸®°í ÀÌ¹ø ¸í·É¾î´Â ¹ö¸°´Ù
+		//ì»¤ë„¥ì…˜ì€ ì‚´ì•„ ìˆëŠ” ìƒíƒœ, ì„¸ì…˜ë„ ì‚´ì•„ìˆëŠ” ìƒíƒœ
+		//ê·¸ëŸ°ë° Overlapped êµ¬ì¡°ì²´ê°€ ê¹¨ì¡Œìœ¼ë©´ ì´ê²½ìš° ë¹„ë™ê¸°ë¡œ ë°›ê³  ë³´ë‚¸ ê±¸ í™•ì¸í•  ìˆ˜ ì—†ì–ì•„?
+		//ì„¸ì…˜ì€ ì‚´ë¦¬ê³  ì´ë²ˆ ëª…ë ¹ì–´ëŠ” ë²„ë¦°ë‹¤
 		if (nullptr == context)
 		{
 			continue;
@@ -193,7 +193,7 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 bool IocpManager::ReceiveCompletion(const ClientSession* client, OverlappedIOContext* context, DWORD dwTransferred)
 {
 
-	/// echo back Ã³¸® client->PostSend()»ç¿ë.
+	/// echo back ì²˜ë¦¬ client->PostSend()ì‚¬ìš©.
 	if ( !(client->PostSend( context->mBuffer, dwTransferred )) )
 	{
 		delete context;
@@ -207,11 +207,11 @@ bool IocpManager::ReceiveCompletion(const ClientSession* client, OverlappedIOCon
 
 bool IocpManager::SendCompletion(const ClientSession* client, OverlappedIOContext* context, DWORD dwTransferred)
 {
-	/// Àü¼Û ´Ù µÇ¾ú´ÂÁö È®ÀÎÇÏ´Â °Í Ã³¸®..
+	/// ì „ì†¡ ë‹¤ ë˜ì—ˆëŠ”ì§€ í™•ì¸í•˜ëŠ” ê²ƒ ì²˜ë¦¬..
 	//if (context->mWsaBuf.len != dwTransferred) {...}
 	if (context->mWsaBuf.len != dwTransferred)
 	{
-		printf_s( "Àü¼Û ¸¶¹«¸® ¾ÈµÇ¾úÀ½ \n" );
+		printf_s( "ì „ì†¡ ë§ˆë¬´ë¦¬ ì•ˆë˜ì—ˆìŒ \n" );
 		delete context;
 		return false;
 	}

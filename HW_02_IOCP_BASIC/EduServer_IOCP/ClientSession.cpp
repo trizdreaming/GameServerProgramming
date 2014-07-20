@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "Exception.h"
 #include "EduServer_IOCP.h"
 #include "ClientSession.h"
@@ -8,7 +8,7 @@
 
 bool ClientSession::OnConnect(SOCKADDR_IN* addr)
 {
-	//TODO: ÀÌ ¿µ¿ª lockÀ¸·Î º¸È£ ÇÒ °Í
+	//TODO: ì´ ì˜ì—­ lockìœ¼ë¡œ ë³´í˜¸ í•  ê²ƒ
 	mLock.EnterLock();
 	//mLock.LeaveLock();
 
@@ -29,12 +29,12 @@ bool ClientSession::OnConnect(SOCKADDR_IN* addr)
 		return false;
 	}
 	
-	//TODO: ¿©±â¿¡¼­ CreateIoCompletionPort((HANDLE)mSocket, ...);»ç¿ëÇÏ¿© ¿¬°áÇÒ °Í
-	//¼¼¼Ç ÀÚÃ¼¸¦ Å°·Î ÇÏ°í ÀÖ´Â »óÅÂ¶ó this·Î ¿¬°á
+	//TODO: ì—¬ê¸°ì—ì„œ CreateIoCompletionPort((HANDLE)mSocket, ...);ì‚¬ìš©í•˜ì—¬ ì—°ê²°í•  ê²ƒ
+	//ì„¸ì…˜ ìžì²´ë¥¼ í‚¤ë¡œ í•˜ê³  ìžˆëŠ” ìƒíƒœë¼ thisë¡œ ì—°ê²°
 	HANDLE handle = CreateIoCompletionPort( (HANDLE)mSocket, GIocpManager->GetComletionPort(), ( ULONG_PTR )this, 0 );
-	//ÀÌ°Ç °¢ ¼ÒÄÏÀ» comletionPort¿¡ ¿¬°áÇÏ´Â °Å±â ¶§¹®¿¡ ´ç¿¬È÷ ±âÁ¸ IOCP Port´Â À¯Áö µÇ±â ¶§¹®
-	//½Å±Ô·Î »ý¼ºÇÏ´Â °ÍÀÌ ¾Æ´Ï´Ù
-	//»ý¼º°ú ¹ÙÀÎµùÀ» º°µµ Ã³¸®ÇÏ´Â °Í
+	//ì´ê±´ ê° ì†Œì¼“ì„ comletionPortì— ì—°ê²°í•˜ëŠ” ê±°ê¸° ë•Œë¬¸ì— ë‹¹ì—°ížˆ ê¸°ì¡´ IOCP PortëŠ” ìœ ì§€ ë˜ê¸° ë•Œë¬¸
+	//ì‹ ê·œë¡œ ìƒì„±í•˜ëŠ” ê²ƒì´ ì•„ë‹ˆë‹¤
+	//ìƒì„±ê³¼ ë°”ì¸ë”©ì„ ë³„ë„ ì²˜ë¦¬í•˜ëŠ” ê²ƒ
 	if (handle != GIocpManager->GetComletionPort())
 	{
 		printf_s("[DEBUG] CreateIoCompletionPort error: %d\n", GetLastError());
@@ -55,7 +55,7 @@ bool ClientSession::OnConnect(SOCKADDR_IN* addr)
 
 void ClientSession::Disconnect(DisconnectReason dr)
 {
-	//TODO: ÀÌ ¿µ¿ª lockÀ¸·Î º¸È£ÇÒ °Í
+	//TODO: ì´ ì˜ì—­ lockìœ¼ë¡œ ë³´í˜¸í•  ê²ƒ
 	mLock.EnterLock();
 
 	if ( !IsConnected() )
@@ -89,7 +89,7 @@ bool ClientSession::PostRecv() const
 
 	OverlappedIOContext* recvContext = new OverlappedIOContext(this, IO_RECV);
 
-	//TODO: WSARecv »ç¿ëÇÏ¿© ±¸ÇöÇÒ °Í
+	//TODO: WSARecv ì‚¬ìš©í•˜ì—¬ êµ¬í˜„í•  ê²ƒ
 	DWORD recvBytes = 0;
 	recvContext->mWsaBuf.len = BUFSIZE;
 	recvContext->mWsaBuf.buf = recvContext->mBuffer;
@@ -119,14 +119,14 @@ bool ClientSession::PostSend(const char* buf, int len) const
 	/// copy for echoing back..
 	memcpy_s(sendContext->mBuffer, BUFSIZE, buf, len);
 
-	//TODO: WSASend »ç¿ëÇÏ¿© ±¸ÇöÇÒ °Í
+	//TODO: WSASend ì‚¬ìš©í•˜ì—¬ êµ¬í˜„í•  ê²ƒ
 	DWORD sendBytes = 0;
 	sendContext->mWsaBuf.len = len;
 	sendContext->mWsaBuf.buf = sendContext->mBuffer;
 	
-	//À©µµ¿ì ¼ÒÄÏ ¹öÆÛ¿¡ ´ëÇÑ Á¤º¸ Æ÷ÇÔ
-	//http://yongho1037.tistory.com/531 Âü°í
-	//Áö±ÝÀº ¿¡ÄÚ ¼­¹ö´Ï±î ¹Ù·Î º¹»çÇØ¼­ PostSendÃ³¸®
+	//ìœˆë„ìš° ì†Œì¼“ ë²„í¼ì— ëŒ€í•œ ì •ë³´ í¬í•¨
+	//http://yongho1037.tistory.com/531 ì°¸ê³ 
+	//ì§€ê¸ˆì€ ì—ì½” ì„œë²„ë‹ˆê¹Œ ë°”ë¡œ ë³µì‚¬í•´ì„œ PostSendì²˜ë¦¬
 	if (SOCKET_ERROR== WSASend(mSocket, &sendContext->mWsaBuf, 1, (LPDWORD)& sendBytes, NULL, &(sendContext->mOverlapped),NULL))
 	{
 		if (WSA_IO_PENDING != WSAGetLastError())
