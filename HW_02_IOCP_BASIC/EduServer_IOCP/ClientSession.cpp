@@ -94,6 +94,8 @@ bool ClientSession::PostRecv() const
 	recvContext->mWsaBuf.len = BUFSIZE;
 	recvContext->mWsaBuf.buf = recvContext->mBuffer;
 
+	//여기서 플래그 없으면 에러남!
+	//
 	DWORD flags = 0;
 	if ( SOCKET_ERROR == WSARecv( mSocket, &recvContext->mWsaBuf, 1, &recvBytes, &flags, &( recvContext->mOverlapped ), NULL ))
 	{
@@ -124,10 +126,11 @@ bool ClientSession::PostSend(const char* buf, int len) const
 	sendContext->mWsaBuf.len = len;
 	sendContext->mWsaBuf.buf = sendContext->mBuffer;
 	
+	DWORD flags = 0;
 	//윈도우 소켓 버퍼에 대한 정보 포함
 	//http://yongho1037.tistory.com/531 참고
 	//지금은 에코 서버니까 바로 복사해서 PostSend처리
-	if (SOCKET_ERROR== WSASend(mSocket, &sendContext->mWsaBuf, 1, (LPDWORD)& sendBytes, NULL, &(sendContext->mOverlapped),NULL))
+	if (SOCKET_ERROR== WSASend(mSocket, &sendContext->mWsaBuf, 1, (LPDWORD)& sendBytes, flags, &(sendContext->mOverlapped),NULL))
 	{
 		if (WSA_IO_PENDING != WSAGetLastError())
 		{

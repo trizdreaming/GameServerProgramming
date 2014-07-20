@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "FastSpinlock.h"
 
+//#define BUFSIZE 1536
 #define BUFSIZE	4096
 
 class ClientSession ;
