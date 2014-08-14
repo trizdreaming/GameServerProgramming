@@ -3,6 +3,7 @@
 #include "EduServer_IOCP.h"
 #include "ClientSession.h"
 #include "SessionManager.h"
+#include "Exception.h"
 
 #define GQCS_TIMEOUT	20
 
@@ -157,9 +158,12 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 		//커넥션은 살아 있는 상태, 세션도 살아있는 상태
 		//그런데 Overlapped 구조체가 깨졌으면 이경우 비동기로 받고 보낸 걸 확인할 수 없잖아?
 		//세션은 살리고 이번 명령어는 버린다
+		//이건 서버 펑이다
+
 		if (nullptr == context)
 		{
-			continue;
+			//서버 정지 및 덤프
+			CRASH_ASSERT( false );
 		}
 
 		bool completionOk = true;
@@ -209,6 +213,8 @@ bool IocpManager::SendCompletion(const ClientSession* client, OverlappedIOContex
 {
 	/// 전송 다 되었는지 확인하는 것 처리..
 	//if (context->mWsaBuf.len != dwTransferred) {...}
+
+	//일단은 그냥 끊자
 	if (context->mWsaBuf.len != dwTransferred)
 	{
 		printf_s( "전송 마무리 안되었음 \n" );
